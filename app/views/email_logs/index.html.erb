@@ -1,0 +1,19 @@
+<h2>Email Logs</h2>
+
+<table border="1" cellpadding="8">
+  <tr>
+    <th>Email</th>
+    <th>Subject</th>
+    <th>Status</th>
+    <th>Sent At</th>
+  </tr>
+
+  <% @logs.each do |log| %>
+    <tr>
+      <td><%= log.email %></td>
+      <td><%= log.subject %></td>
+      <td><%= log.status %></td>
+      <td><%= log.sent_at %></td>
+    </tr>
+  <% end %>
+</table>

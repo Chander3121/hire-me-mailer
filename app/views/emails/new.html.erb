@@ -1,0 +1,30 @@
+<h2>Send Resume to HRs</h2>
+
+<%= form_with url: emails_path, local: true, multipart: true do |f| %>
+
+  <div>
+    <label>HR Emails (comma or new line separated)</label><br>
+    <%= text_area_tag :emails, nil, rows: 5 %>
+  </div>
+
+  <div>
+    <label>Subject</label><br>
+    <%= text_field_tag :subject %>
+  </div>
+
+  <div>
+    <label>Email Body</label><br>
+    <%= text_area_tag :body, nil, class: "tinymce", rows: 15 %>
+  </div>
+
+  <div>
+    <label>Resume (PDF/DOC)</label><br>
+    <%= file_field_tag :resume %>
+  </div>
+
+  <br>
+  <%= submit_tag "Send Emails" %>
+
+<% end %>
+
+<%= tinymce %>
