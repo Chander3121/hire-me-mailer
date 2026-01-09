@@ -1,5 +1,5 @@
 class HrMailer < ApplicationMailer
-  default from: "hireme.chanderprakash@gmail.com"
+  default from: ENV["USER_MAIL"] || "hireme.chanderprakash@gmail.com"
 
   def send_resume(email, subject, body, resume)
     filename =
