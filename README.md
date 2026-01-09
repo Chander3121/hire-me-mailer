@@ -1,80 +1,305 @@
-# Job Mailer (Send Resume to HR)
+# Job Mailer – Bulk Resume Sender
 
-Purpose
--------
-A lightweight Rails app that helps you send a resume to multiple HR emails. You paste or upload a resume, compose a subject and HTML body (TinyMCE is integrated), preview the message, and schedule sends. Each send is enqueued as a background job and logged.
+A modern, full-featured Rails application for sending resumes to multiple HR professionals. Features a beautiful glassmorphic UI, rich text editor with TinyMCE, secure file handling, background job processing, and comprehensive email logging.
 
-Quick start (development)
--------------------------
-1. Install Ruby (see `.ruby-version` if present) and PostgreSQL/SQLite as preferred.
-2. Install dependencies:
+## Features
 
-	bundle install
+✨ **Modern UI**
+- Glassmorphic design with Tailwind CSS
+- Gradient backgrounds and smooth animations
+- Responsive layout for mobile and desktop
+- Beautiful email logs dashboard with status badges
 
-3. Setup the database:
+📄 **Resume Management**
+- File upload with drag & drop support
+- Support for PDF, DOC, DOCX formats (max 10MB)
+- Client-side and server-side validation
+- Filename display and change detection
+- Edit forms with resume preservation
 
-	rails db:create db:migrate db:seed
+✉️ **Email Composition**
+- Compose bulk emails to multiple recipients (comma or newline separated)
+- Rich text editor powered by TinyMCE Cloud
+- Subject line and HTML body support
+- Form preview before sending
+- Edit existing drafts anytime
 
-4. Start Sidekiq in a separate terminal (jobs use Sidekiq):
+🚀 **Background Processing**
+- Sidekiq-based job queue for reliable sending
+- Staggered email delivery (1-minute delays between sends)
+- Real-time job monitoring via Sidekiq UI
+- Email status tracking (pending, sent, failed)
 
-	bundle exec sidekiq
+📊 **Email Logging**
+- Complete audit trail of all sent emails
+- Recipient, subject, and delivery status
+- Sent timestamp tracking
+- Filterable and sortable logs
 
-5. Boot the app:
+🔒 **Security**
+- Session data cached (not stored in cookies)
+- Secure file validation and temporary storage
+- CSRF protection and secure headers
+- Content Security Policy compliance
 
-	rails server
+## Quick Start
 
-Then open http://localhost:3000 and send a test.
+### Prerequisites
+- Ruby (see `.ruby-version`)
+- SQLite (default) or PostgreSQL
+- Bundler
 
-How it works (overview)
------------------------
-- Frontend: `app/views/emails/new.html.erb` provides a form to enter HR emails, subject, HTML body (TinyMCE), and upload a resume.
-- Preview: `emails#create` stores form data in session and renders a preview (`emails/preview.html.erb`).
-- Scheduling: `emails#show` creates `EmailLog` records and enqueues `SendResumeJob` for each recipient.
-- Background worker: `app/jobs/send_resume_job.rb` loads the resume file and calls `HrMailer.send_resume`.
-- Mailer: `app/mailers/hr_mailer.rb` attaches the resume and sends HTML email.
+### Installation
 
-Configuration (mail)
---------------------
-Set SMTP environment variables in `.env` or your host (examples):
+1. **Clone and install dependencies:**
+   ```bash
+   bundle install
+   ```
 
-- `SMTP_ADDRESS` (smtp server)
-- `SMTP_PORT` (587)
-- `SMTP_USERNAME`
-- `SMTP_PASSWORD`
-- `SMTP_DOMAIN`
-- `SMTP_AUTH_METHOD` (e.g. `login`)
-- `SMTP_ENABLE_STARTTLS_AUTO` (true/false)
+2. **Setup database:**
+   ```bash
+   rails db:create db:migrate db:seed
+   ```
 
-The app uses Rails mailer configuration from `config/environments/*`. Update those if you need provider-specific options.
+3. **Start Sidekiq worker** (in a separate terminal):
+   ```bash
+   bundle exec sidekiq
+   ```
 
-Queues and monitoring
----------------------
-- Sidekiq is used for background processing. The Sidekiq UI is mounted at `/sidekiq`.
-- Jobs update `EmailLog` status (`pending`, `sent`, `failed`). See `app/models/email_log.rb` and the `email_logs#index` view.
+4. **Start Rails server:**
+   ```bash
+   rails server
+   ```
 
-Security & production notes
----------------------------
-- Do not store resumes in `tmp` for long in production—use persistent storage (S3 or ActiveStorage).
-- Use environment vars (not checked-in files) for SMTP credentials.
-- Run Sidekiq as a managed process in production and use a robust DB and file store.
+5. **Open in browser:**
+   ```
+   http://localhost:3000
+   ```
 
-Testing
--------
-Run the Rails test suite:
+## Configuration
 
-  rails test
+### Email (SMTP)
 
-Troubleshooting
----------------
-- If mails are not sending, check Sidekiq logs and Rails logs for exceptions.
-- Verify SMTP settings and ports are reachable from your host.
+Configure SMTP settings via environment variables or Rails credentials:
 
-Useful files
-------------
-- Mailer: [app/mailers/hr_mailer.rb](app/mailers/hr_mailer.rb#L1-L40)
-- Job: [app/jobs/send_resume_job.rb](app/jobs/send_resume_job.rb#L1-L80)
-- Controller: [app/controllers/emails_controller.rb](app/controllers/emails_controller.rb#L1-L120)
-- Form: [app/views/emails/new.html.erb](app/views/emails/new.html.erb#L1-L80)
-- Preview: [app/views/emails/preview.html.erb](app/views/emails/preview.html.erb#L1-L80)
+```bash
+# .env (development)
+SMTP_ADDRESS=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_DOMAIN=gmail.com
+SMTP_AUTH_METHOD=login
+SMTP_ENABLE_STARTTLS_AUTO=true
+```
 
-If you'd like, I can add a sample `.env.example`, a small rake task to clean `tmp` resumes, or wire ActiveStorage instead of temporary files. Which would you prefer?
+Or use Rails credentials:
+```bash
+rails credentials:edit
+```
+
+Add:
+```yaml
+smtp:
+  address: smtp.gmail.com
+  port: 587
+  username: your-email@gmail.com
+  password: your-app-password
+  domain: gmail.com
+```
+
+### TinyMCE Rich Editor (Optional)
+
+To enable the rich text editor for email composition:
+
+1. **Get API key** from [TinyMCE Cloud](https://www.tiny.cloud)
+
+2. **Set environment variable:**
+   ```bash
+   export TINYMCE_API_KEY=your_api_key_here
+   ```
+
+   Or via Rails credentials:
+   ```bash
+   rails credentials:edit
+   ```
+   Add:
+   ```yaml
+   tinymce:
+     api_key: your_api_key_here
+   ```
+
+Without an API key, the app uses a plain textarea as fallback.
+
+See [docs/TINYMCE.md](docs/TINYMCE.md) for detailed setup instructions.
+
+## How It Works
+
+### User Flow
+
+1. **Compose** – User enters recipient emails, subject, and body (with optional rich editing)
+2. **Upload Resume** – Select PDF/DOC/DOCX file (max 10MB)
+3. **Preview** – Review message and recipient list before sending
+4. **Confirm & Send** – Submit to queue background jobs
+5. **Monitor** – View email logs and job status
+
+### Architecture
+
+**Frontend:**
+- [app/views/emails/new.html.erb](app/views/emails/new.html.erb) – Form with validation and TinyMCE
+- [app/views/emails/confirm.html.erb](app/views/emails/confirm.html.erb) – Preview page
+- [app/views/email_logs/index.html.erb](app/views/email_logs/index.html.erb) – Email history and status
+
+**Backend:**
+- [app/controllers/emails_controller.rb](app/controllers/emails_controller.rb) – Form handling, validation, caching
+- [app/jobs/send_resume_job.rb](app/jobs/send_resume_job.rb) – Background job that sends emails
+- [app/mailers/hr_mailer.rb](app/mailers/hr_mailer.rb) – Email composition and delivery
+- [app/models/email_log.rb](app/models/email_log.rb) – Tracks sent emails
+
+**Storage:**
+- Session data: Rails.cache (expires in 30 minutes)
+- Resume files: `tmp/` directory (temporary, cleaned up after send)
+- Email logs: Database (persistent)
+
+### Data Flow
+
+1. **Create (POST /emails):**
+   - Validates email list, subject, resume file
+   - Stores payload in Rails.cache with 30-min TTL
+   - Stores token in session
+   - Redirects to confirm page
+
+2. **Confirm (GET /emails/confirm):**
+   - Retrieves payload from cache using session token
+   - Displays preview to user
+
+3. **Send Emails (POST /emails/send_emails):**
+   - Creates EmailLog record for each recipient
+   - Queues SendResumeJob with 1-minute staggered delays
+   - Cleans up cache and session
+
+4. **SendResumeJob:**
+   - Loads resume file from tmp/
+   - Calls HrMailer.send_resume
+   - Updates EmailLog status
+
+5. **Edit (GET /emails/edit):**
+   - Loads cached payload
+   - Pre-fills form with existing data
+   - Preserves resume file if no new file selected
+
+## File Structure
+
+```
+app/
+  controllers/
+    emails_controller.rb          # Main form and send logic
+  jobs/
+    send_resume_job.rb            # Background email sender
+  mailers/
+    hr_mailer.rb                  # Email composition
+  models/
+    email_log.rb                  # Email tracking
+  views/
+    emails/
+      new.html.erb                # Form with upload & TinyMCE
+      confirm.html.erb            # Preview before send
+    email_logs/
+      index.html.erb              # Logs with status badges
+    layouts/
+      application.html.erb        # Main layout with Tailwind
+config/
+  routes.rb                       # URL routing
+  initializers/
+    tinymce.rb                    # TinyMCE config
+docs/
+  TINYMCE.md                      # TinyMCE setup guide
+```
+
+## Monitoring & Debugging
+
+### Sidekiq Admin UI
+Access job queue and worker status at:
+```
+http://localhost:3000/sidekiq
+```
+
+### Email Logs
+View sent/failed/pending emails at:
+```
+http://localhost:3000/email_logs
+```
+
+### Logs
+Check Rails logs for errors:
+```bash
+tail -f log/development.log
+```
+
+## Production Deployment
+
+### Important Notes
+- ⚠️ **File Storage:** `tmp/` is not persistent in production. Use AWS S3 or ActiveStorage for reliable resume storage.
+- 🔐 **Credentials:** Use environment variables or Rails encrypted credentials, never hardcode secrets.
+- 📦 **Sidekiq:** Run as a managed background process (systemd, Docker, or platform service).
+- 💾 **Database:** Use PostgreSQL in production; SQLite is development-only.
+- 🚀 **Cache:** Configure Redis for Rails.cache instead of default file/memory store.
+
+### Example Docker Setup
+The repo includes a `Dockerfile` for containerized deployment. Build and run:
+```bash
+docker build -t job-mailer .
+docker run -p 3000:3000 \
+  -e SMTP_ADDRESS=... \
+  -e SMTP_USERNAME=... \
+  -e TINYMCE_API_KEY=... \
+  job-mailer
+```
+
+## Testing
+
+Run the full test suite:
+```bash
+rails test
+```
+
+Run specific test:
+```bash
+rails test test/controllers/emails_controller_test.rb
+```
+
+## Troubleshooting
+
+### Emails Not Sending
+1. Check Sidekiq UI at `/sidekiq` for failed jobs
+2. Review Rails logs: `tail -f log/development.log`
+3. Verify SMTP credentials and firewall/port access
+4. Check email logs at `/email_logs` for status
+
+### Resume Upload Failing
+- Ensure file is PDF, DOC, or DOCX
+- Check file size is under 10MB
+- Verify `tmp/` directory exists and is writable
+
+### TinyMCE Not Loading
+- Verify API key is set (env var or credentials)
+- Check browser console for CDN errors
+- App falls back to plain textarea if key is missing
+
+### Session/Caching Issues
+- Clear Rails cache: `rails runner 'Rails.cache.clear'`
+- Restart server: `rails server`
+- Check `config/cache.yml` for cache store configuration
+
+## Contributing
+
+Found a bug or have a feature request? Open an issue or submit a pull request!
+
+## License
+
+MIT License – see LICENSE file for details.
+
+## Support
+
+For questions or issues, check the troubleshooting section above or review the code comments in the key files listed above.
+
