@@ -1,30 +1,19 @@
 class HrMailer < ApplicationMailer
-  default from: ENV["USER_MAIL"] || "hireme.chanderprakash@gmail.com"
+  include ActionView::Helpers::SanitizeHelper
+  default from: ENV.fetch("USER_MAIL", "hireme.chanderprakash@gmail.com")
 
-  def send_resume(*args, **kwargs)
-    # support both positional and keyword args for flexibility in tests
-    if kwargs.any?
-      email = kwargs[:recipient] || kwargs[:email]
-      subject = kwargs[:subject]
-      body = kwargs[:body]
-      resume = kwargs[:resume_path] || kwargs[:resume]
-    else
-      email, subject, body, resume = args
-    end
-
-    # If a path string was passed, open the file
-    resume = File.open(resume) if resume.is_a?(String)
-
-    filename = if resume.respond_to?(:original_filename)
-      resume.original_filename
-    else
-      File.basename(resume.path)
-    end
-
-    attachments[filename] = resume.read
+  def send_resume(email:, subject:, body:, resume_path:, resume_filename:)
+    attachments[resume_filename] = File.binread(resume_path)
 
     mail(to: email, subject: subject) do |format|
-      format.html { render html: body.html_safe }
+      format.text { render plain: body }
+      format.html do
+        render html: sanitize(
+          body,
+          tags: %w[p br strong b em i u ul ol li a],
+          attributes: %w[href]
+        ).html_safe
+      end
     end
   end
 end

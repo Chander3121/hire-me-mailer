@@ -1,19 +1,22 @@
 class SendResumeJob < ApplicationJob
   queue_as :default
 
-  def perform(email_log_id, resume_path, subject, body)
-    email_log = EmailLog.find(email_log_id)
+  def perform(log_id, resume_path, subject, body, resume_filename)
+    log = EmailLog.find(log_id)
 
-    resume = File.open(resume_path)
+    HrMailer
+      .send_resume(
+        email: log.email,
+        subject: subject,
+        body: body,
+        resume_path: resume_path,
+        resume_filename: resume_filename
+      )
+      .deliver_now
 
-    HrMailer.send_resume(email_log.email, subject, body, resume).deliver_now
-
-    email_log.update!(
-      status: "sent",
-      sent_at: Time.current
-    )
+    log.update!(status: "sent")
   rescue => e
-    email_log.update!(status: "failed")
+    log.update!(status: "failed")
     Rails.logger.error e.message
   end
 end

@@ -1,108 +1,146 @@
 require "securerandom"
 
 class EmailsController < ApplicationController
-  def new
-  end
+  ALLOWED_CONTENT_TYPES = {
+    "application/pdf" => ".pdf",
+    "application/msword" => ".doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx"
+  }.freeze
+
+  MAX_RESUME_SIZE = 10.megabytes
+
+  def new; end
 
   def create
-    @emails  = params[:emails].split(/[\s,]+/).map(&:strip).reject(&:empty?).uniq
+    extract_form_params
+
+    existing_data = load_cached_data
+
+    if @resume.blank? && existing_data.present?
+      reuse_cached_resume(existing_data)
+    elsif @resume.present?
+      process_new_resume!
+    else
+      return render_error("Resume is required")
+    end
+
+    return render_error("Emails, subject and body are required") if invalid_form_data?
+
+    cache_form_data!
+    redirect_to confirm_emails_path
+  end
+
+  def confirm
+    data = load_cached_data
+    return redirect_to new_email_path if data.blank?
+
+    assign_confirm_vars(data)
+  end
+
+  def edit
+    data = load_cached_data
+    return redirect_to new_email_path if data.blank?
+
+    assign_edit_vars(data)
+    render :new
+  end
+
+  def send_emails
+    data = load_cached_data
+    return redirect_to new_email_path if data.blank?
+
+    enqueue_emails(data)
+    cleanup_session
+
+    redirect_to email_logs_path, notice: "Emails scheduled successfully!"
+  end
+
+  private
+
+  # Form / Params
+  def extract_form_params
+    @emails  = params[:emails].to_s.split(/[\s,]+/).map(&:strip).reject(&:empty?).uniq
     @subject = params[:subject]
     @body    = params[:body]
     @resume  = params[:resume]
+  end
 
-    token = session[:email_data_key]
-    existing_data = Rails.cache.read("email_form_#{token}") if token.present?
+  def invalid_form_data?
+    @emails.blank? || @subject.blank? || @body.blank?
+  end
 
-    if @resume.blank? && existing_data.present?
-      resume_path = existing_data["resume_path"]
-      resume_filename = existing_data["resume_filename"]
-    elsif @resume.present?
-      allowed_types = %w[
-        application/pdf
-        application/msword
-        application/vnd.openxmlformats-officedocument.wordprocessingml.document
-      ]
+  # Resume Handling (SECURE)
+  def process_new_resume!
+    extension = ALLOWED_CONTENT_TYPES[@resume.content_type]
+    return render_error("Resume must be PDF, DOC, or DOCX") unless extension
+    return render_error("Resume must be less than 10MB") if @resume.size > MAX_RESUME_SIZE
 
-      unless allowed_types.include?(@resume.content_type)
-        flash[:alert] = "Resume must be PDF, DOC, or DOCX"
-        return render :new, status: :unprocessable_entity
-      end
+    filename = "#{SecureRandom.hex(16)}#{extension}"
+    @resume_path = Rails.root.join("tmp", filename)
 
-      if @resume.size > 10.megabytes
-        flash[:alert] = "Resume must be less than 10MB"
-        return render :new, status: :unprocessable_entity
-      end
+    File.open(@resume_path, "wb") { |file| file.write(@resume.read) }
 
-      # 🔐 Generate a SAFE filename (important)
-      original_name = @resume.original_filename
-      extension     = File.extname(original_name)
-      safe_name     = SecureRandom.hex(16) + extension
+    # ✅ SAFE: used only for email attachment name
+    @resume_filename = @resume.original_filename
+  end
 
-      resume_path = Rails.root.join("tmp", safe_name)
+  def reuse_cached_resume(data)
+    @resume_path = data["resume_path"]
+    @resume_filename = data["resume_filename"]
+  end
 
-      File.open(resume_path, "wb") do |file|
-        file.write(@resume.read)
-      end
-
-      # 🔐 Keep original filename ONLY for display
-      resume_filename = original_name
-    else
-      flash[:alert] = "Resume is required"
-      return render :new, status: :unprocessable_entity
-    end
-
-    if @emails.blank? || @subject.blank? || @body.blank?
-      flash[:alert] = "Emails, subject and body are required"
-      return render :new, status: :unprocessable_entity
-    end
-
+  # Cache / Session
+  def cache_form_data!
     token = SecureRandom.hex(16)
 
     Rails.cache.write(
-      "email_form_#{token}",
+      cache_key(token),
       {
         "emails" => @emails,
         "subject" => @subject,
         "body" => @body,
-        "resume_path" => resume_path.to_s,
-        "resume_filename" => resume_filename
+        "resume_path" => @resume_path.to_s,
+        "resume_filename" => @resume_filename
       },
       expires_in: 30.minutes
     )
 
     session[:email_data_key] = token
-    redirect_to confirm_emails_path
   end
 
-  def confirm
+  def load_cached_data
     token = session[:email_data_key]
-    data = Rails.cache.read("email_form_#{token}") if token.present?
-    return redirect_to new_email_path if data.blank?
+    Rails.cache.read(cache_key(token)) if token.present?
+  end
 
+  def cache_key(token)
+    "email_form_#{token}"
+  end
+
+  def cleanup_session
+    token = session[:email_data_key]
+    Rails.cache.delete(cache_key(token)) if token.present?
+    session.delete(:email_data_key)
+  end
+
+  # Assignments
+  def assign_confirm_vars(data)
     @emails = data["emails"]
     @subject = data["subject"]
     @body = data["body"]
     @resume_filename = data["resume_filename"]
   end
 
-  def edit
-    token = session[:email_data_key]
-    data = Rails.cache.read("email_form_#{token}") if token.present?
-    return redirect_to new_email_path if data.blank?
-
+  def assign_edit_vars(data)
     @emails = data["emails"].join("\n")
     @subject = data["subject"]
     @body = data["body"]
     @resume_filename = data["resume_filename"]
     @editing = true
-    render :new
   end
 
-  def send_emails
-    token = session[:email_data_key]
-    data = Rails.cache.read("email_form_#{token}") if token.present?
-    return redirect_to new_email_path if data.blank?
-
+  # Jobs
+  def enqueue_emails(data)
     data["emails"].each_with_index do |email, index|
       log = EmailLog.create!(
         email: email,
@@ -114,13 +152,15 @@ class EmailsController < ApplicationController
         log.id,
         data["resume_path"],
         data["subject"],
-        data["body"]
+        data["body"],
+        data["resume_filename"]
       )
     end
+  end
 
-    Rails.cache.delete("email_form_#{token}") if token.present?
-    session.delete(:email_data_key)
-
-    redirect_to email_logs_path, notice: "Emails scheduled successfully!"
+  # Errors
+  def render_error(message)
+    flash[:alert] = message
+    render :new, status: :unprocessable_entity
   end
 end
