@@ -1,4 +1,4 @@
-require 'securerandom'
+require "securerandom"
 
 class EmailsController < ApplicationController
   def new
@@ -50,11 +50,11 @@ class EmailsController < ApplicationController
     # Store the payload in server-side cache and keep a small token in session
     token = SecureRandom.hex(16)
     Rails.cache.write("email_form_#{token}", {
-      'emails' => @emails,
-      'subject' => @subject,
-      'body' => @body,
-      'resume_path' => resume_path.to_s,
-      'resume_filename' => resume_filename
+      "emails" => @emails,
+      "subject" => @subject,
+      "body" => @body,
+      "resume_path" => resume_path.to_s,
+      "resume_filename" => resume_filename
     }, expires_in: 30.minutes)
 
     session[:email_data_key] = token

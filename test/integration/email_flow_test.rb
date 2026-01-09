@@ -2,7 +2,7 @@ require "test_helper"
 
 class EmailFlowTest < ActionDispatch::IntegrationTest
   setup do
-    @resume_file = fixture_file_upload('resume.pdf', 'application/pdf')
+    @resume_file = fixture_file_upload("resume.pdf", "application/pdf")
     ActionMailer::Base.deliveries.clear
   end
 
@@ -24,7 +24,7 @@ class EmailFlowTest < ActionDispatch::IntegrationTest
 
     # Step 3: Verify cache storage
     cached_data = Rails.cache.read("email_form_#{token}")
-    assert_equal ["hr1@company.com", "hr2@company.com"], cached_data["emails"]
+    assert_equal [ "hr1@company.com", "hr2@company.com" ], cached_data["emails"]
     assert_equal "Senior Rails Developer", cached_data["subject"]
 
     # Step 4: Get confirm page
@@ -32,7 +32,7 @@ class EmailFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Step 5: Send emails
-    assert_difference('EmailLog.count', 2) do
+    assert_difference("EmailLog.count", 2) do
       post send_emails_emails_path
     end
 
@@ -40,8 +40,8 @@ class EmailFlowTest < ActionDispatch::IntegrationTest
     assert_enqueued_jobs(2, only: SendResumeJob)
 
     # Step 7: Verify email logs are pending
-    logs = EmailLog.where(email: ["hr1@company.com", "hr2@company.com"])
-    assert logs.all? { |log| log.status == 'pending' }
+    logs = EmailLog.where(email: [ "hr1@company.com", "hr2@company.com" ])
+    assert logs.all? { |log| log.status == "pending" }
 
     # Step 8: Verify redirect
     assert_redirected_to email_logs_path
@@ -83,13 +83,13 @@ class EmailFlowTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Subject", cached_data["subject"]
 
     # Send
-    assert_difference('EmailLog.count', 1) do
+    assert_difference("EmailLog.count", 1) do
       post send_emails_emails_path
     end
   end
 
   test "complete flow with resume replacement" do
-    new_resume = fixture_file_upload('new_resume.pdf', 'application/pdf')
+    new_resume = fixture_file_upload("new_resume.pdf", "application/pdf")
 
     # Create initial form
     post emails_path, params: {
@@ -140,7 +140,7 @@ class EmailFlowTest < ActionDispatch::IntegrationTest
   end
 
   test "show file type validation error" do
-    txt_file = fixture_file_upload('invalid.txt', 'text/plain')
+    txt_file = fixture_file_upload("invalid.txt", "text/plain")
     post emails_path, params: {
       emails: "hr@company.com",
       subject: "Test",
@@ -176,8 +176,8 @@ class EmailFlowTest < ActionDispatch::IntegrationTest
     # Both should have valid data
     first_data = Rails.cache.read("email_form_#{first_token}")
     second_data = Rails.cache.read("email_form_#{second_token}")
-    assert_equal ["hr1@company.com"], first_data["emails"]
-    assert_equal ["hr2@company.com"], second_data["emails"]
+    assert_equal [ "hr1@company.com" ], first_data["emails"]
+    assert_equal [ "hr2@company.com" ], second_data["emails"]
   end
 
   test "jobs execute and send actual emails" do

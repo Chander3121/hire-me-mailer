@@ -2,14 +2,14 @@ require "test_helper"
 
 class EmailsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @resume_file = fixture_file_upload('resume.pdf', 'application/pdf')
+    @resume_file = fixture_file_upload("resume.pdf", "application/pdf")
   end
 
   # ===== NEW PAGE TESTS =====
   test "should display form page successfully" do
     get new_email_path
     assert_response :success
-    assert_select 'form'
+    assert_select "form"
   end
 
   # ===== CREATE TESTS =====
@@ -20,7 +20,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "I am interested in the position",
       resume: @resume_file
     }
-    
+
     assert_redirected_to confirm_emails_path
     assert_not_nil session[:email_data_key]
   end
@@ -32,7 +32,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "I am interested",
       resume: @resume_file
     }
-    
+
     assert_redirected_to confirm_emails_path
     follow_redirect!
     token = session[:email_data_key]
@@ -49,7 +49,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "I am interested",
       resume: @resume_file
     }
-    
+
     assert_response :unprocessable_entity
   end
 
@@ -60,7 +60,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "I am interested",
       resume: @resume_file
     }
-    
+
     assert_response :unprocessable_entity
   end
 
@@ -71,7 +71,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "",
       resume: @resume_file
     }
-    
+
     assert_response :unprocessable_entity
   end
 
@@ -81,43 +81,43 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       subject: "Job Application",
       body: "I am interested"
     }
-    
+
     assert_response :unprocessable_entity
   end
 
   test "should reject invalid file type txt" do
-    txt_file = fixture_file_upload('invalid.txt', 'text/plain')
+    txt_file = fixture_file_upload("invalid.txt", "text/plain")
     post emails_path, params: {
       emails: "hr@company.com",
       subject: "Job Application",
       body: "I am interested",
       resume: txt_file
     }
-    
+
     assert_response :unprocessable_entity
   end
 
   test "should accept PDF resume" do
-    pdf_file = fixture_file_upload('resume.pdf', 'application/pdf')
+    pdf_file = fixture_file_upload("resume.pdf", "application/pdf")
     post emails_path, params: {
       emails: "hr@company.com",
       subject: "Job Application",
       body: "I am interested",
       resume: pdf_file
     }
-    
+
     assert_redirected_to confirm_emails_path
   end
 
   test "should accept DOCX resume" do
-    docx_file = fixture_file_upload('resume.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    docx_file = fixture_file_upload("resume.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     post emails_path, params: {
       emails: "hr@company.com",
       subject: "Job Application",
       body: "I am interested",
       resume: docx_file
     }
-    
+
     assert_redirected_to confirm_emails_path
   end
 
@@ -128,13 +128,13 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "<p>Test Body</p>",
       resume: @resume_file
     }
-    
+
     token = session[:email_data_key]
     assert_not_nil token
-    
+
     cached_data = Rails.cache.read("email_form_#{token}")
     assert_not_nil cached_data
-    assert_equal ["hr@company.com"], cached_data["emails"]
+    assert_equal [ "hr@company.com" ], cached_data["emails"]
     assert_equal "Test Subject", cached_data["subject"]
   end
 
@@ -146,7 +146,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     get confirm_emails_path
     assert_response :success
   end
@@ -165,7 +165,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Original",
       resume: @resume_file
     }
-    
+
     get edit_emails_path
     assert_response :success
   end
@@ -177,13 +177,13 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Original",
       resume: @resume_file
     }
-    
+
     post emails_path, params: {
       emails: "hr@company.com",
       subject: "Updated",
       body: "Updated"
     }
-    
+
     token = session[:email_data_key]
     cached_data = Rails.cache.read("email_form_#{token}")
     assert_not_nil cached_data["resume_path"]
@@ -196,15 +196,15 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Original",
       resume: @resume_file
     }
-    
-    new_file = fixture_file_upload('new_resume.pdf', 'application/pdf')
+
+    new_file = fixture_file_upload("new_resume.pdf", "application/pdf")
     post emails_path, params: {
       emails: "hr@company.com",
       subject: "Updated",
       body: "Updated",
       resume: new_file
     }
-    
+
     assert_redirected_to confirm_emails_path
   end
 
@@ -216,8 +216,8 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
-    assert_difference('EmailLog.count', 2) do
+
+    assert_difference("EmailLog.count", 2) do
       post send_emails_emails_path
     end
   end
@@ -229,7 +229,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     assert_enqueued_jobs(2, only: SendResumeJob) do
       post send_emails_emails_path
     end
@@ -243,11 +243,11 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     post send_emails_emails_path
-    
+
     assert_equal 1, EmailLog.count
-    assert_equal 'pending', EmailLog.first.status
+    assert_equal "pending", EmailLog.first.status
   end
 
   test "should redirect to email logs after sending" do
@@ -257,7 +257,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     post send_emails_emails_path
     assert_redirected_to email_logs_path
   end
@@ -269,10 +269,10 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     token = session[:email_data_key]
     post send_emails_emails_path
-    
+
     assert_nil session[:email_data_key]
   end
 
@@ -284,7 +284,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     assert_redirected_to confirm_emails_path
   end
 
@@ -295,7 +295,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: "Test",
       resume: @resume_file
     }
-    
+
     token = session[:email_data_key]
     cached_data = Rails.cache.read("email_form_#{token}")
     assert_equal 1, cached_data["emails"].length
@@ -309,7 +309,7 @@ class EmailsControllerTest < ActionDispatch::IntegrationTest
       body: long_body,
       resume: @resume_file
     }
-    
+
     assert_redirected_to confirm_emails_path
   end
 end

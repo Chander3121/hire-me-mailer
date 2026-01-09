@@ -2,7 +2,7 @@ require "test_helper"
 
 class HrMailerTest < ActionMailer::TestCase
   setup do
-    @resume_path = fixture_file_upload('resume.pdf', 'application/pdf').path
+    @resume_path = fixture_file_upload("resume.pdf", "application/pdf").path
   end
 
   test "should send resume email with correct recipient" do
@@ -23,7 +23,7 @@ class HrMailerTest < ActionMailer::TestCase
       body: "<p>Please consider my application</p>",
       resume_path: @resume_path
     )
-    
+
     assert_equal "Senior Rails Developer Application", email.subject
   end
 
@@ -35,7 +35,7 @@ class HrMailerTest < ActionMailer::TestCase
       body: body_text,
       resume_path: @resume_path
     )
-    
+
     assert_includes email.body.encoded, "I am very interested in this position"
   end
 
@@ -46,8 +46,8 @@ class HrMailerTest < ActionMailer::TestCase
       body: "<p>Application</p>",
       resume_path: @resume_path
     )
-    
-    assert email.attachments.any? { |att| att.filename.include?('resume') }
+
+    assert email.attachments.any? { |att| att.filename.include?("resume") }
   end
 
   test "should set from address" do
@@ -57,7 +57,7 @@ class HrMailerTest < ActionMailer::TestCase
       body: "<p>Application</p>",
       resume_path: @resume_path
     )
-    
+
     assert_not_nil email.from
   end
 
@@ -81,15 +81,15 @@ class HrMailerTest < ActionMailer::TestCase
       body: html_body,
       resume_path: @resume_path
     )
-    
+
     # Check that HTML tags are preserved
     assert_includes email.body.encoded, "<h1>"
     assert_includes email.body.encoded, "<ul>"
   end
 
   test "should send to correct recipient email" do
-    recipients = ["hr1@company.com", "hr2@company.com", "hr3@company.com"]
-    
+    recipients = [ "hr1@company.com", "hr2@company.com", "hr3@company.com" ]
+
     recipients.each do |recipient|
       email = HrMailer.send_resume(
         recipient: recipient,
@@ -97,8 +97,8 @@ class HrMailerTest < ActionMailer::TestCase
         body: "<p>Application</p>",
         resume_path: @resume_path
       )
-      
-      assert_equal [recipient], email.to
+
+      assert_equal [ recipient ], email.to
     end
   end
 
@@ -109,7 +109,7 @@ class HrMailerTest < ActionMailer::TestCase
       body: "<p>Application</p>",
       resume_path: @resume_path
     )
-    
+
     attachment = email.attachments.first
     assert_not_nil attachment
     assert_not_empty attachment.body.to_s

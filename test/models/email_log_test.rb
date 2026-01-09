@@ -5,7 +5,7 @@ class EmailLogTest < ActiveSupport::TestCase
     @valid_attributes = {
       email: "hr@company.com",
       subject: "Job Application",
-      status: 'pending'
+      status: "pending"
     }
   end
 
@@ -61,14 +61,14 @@ class EmailLogTest < ActiveSupport::TestCase
 
   test "should default status to pending" do
     email_log = EmailLog.create!(@valid_attributes)
-    assert_equal 'pending', email_log.status
+    assert_equal "pending", email_log.status
   end
 
   test "should set sent_at when status is sent" do
     email_log = EmailLog.create!(@valid_attributes)
     assert_nil email_log.sent_at
 
-    email_log.update(status: 'sent', sent_at: Time.current)
+    email_log.update(status: "sent", sent_at: Time.current)
     assert_not_nil email_log.sent_at
   end
 
