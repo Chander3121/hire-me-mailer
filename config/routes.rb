@@ -15,5 +15,9 @@ Rails.application.routes.draw do
   mount Sidekiq::Web => "/sidekiq"
   root "emails#new"
   resources :email_logs, only: :index
-  resources :emails, only: [:new, :create]
+  resources :emails, only: [:new, :create] do
+    get :confirm, on: :collection
+    get :edit, on: :collection
+    post :send_emails, on: :collection
+  end
 end

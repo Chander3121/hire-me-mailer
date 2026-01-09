@@ -1,0 +1,66 @@
+/* TinyMCE custom styling */
+.tinymce-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+.tinymce-wrapper textarea {
+  display: block;
+  width: 100%;
+  min-height: 400px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  color: #1f2937;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.tinymce-wrapper textarea:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  border-color: transparent;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+/* TinyMCE iframe styling */
+.mce-content-body {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.mce-tinymce {
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.mce-panel {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.mce-toolbar {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.mce-btn-group {
+  background-color: transparent !important;
+}
+
+.mce-btn {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(200, 200, 200, 0.5) !important;
+  color: #1f2937 !important;
+}
+
+.mce-btn:hover {
+  background-color: rgba(220, 220, 220, 0.8) !important;
+}
