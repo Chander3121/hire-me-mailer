@@ -33,8 +33,11 @@
           <% if tinymce_key.present? %>
             <script src="https://cdn.tiny.cloud/1/<%= tinymce_key %>/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
             <script>
-              document.addEventListener('DOMContentLoaded', function() {
+              function initializeTinyMCE() {
                 if (typeof tinymce !== 'undefined') {
+                  // Remove existing editor if it exists
+                  tinymce.remove('#body_content');
+                  
                   tinymce.init({
                     selector: '#body_content',
                     plugins: 'lists link image code help wordcount',
@@ -48,7 +51,11 @@
                     content_css: 'default'
                   });
                 }
-              });
+              }
+              
+              // Initialize on page load and on Turbo navigations
+              document.addEventListener('DOMContentLoaded', initializeTinyMCE);
+              document.addEventListener('turbo:load', initializeTinyMCE);
             </script>
           <% else %>
             <div class="rounded-md bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
@@ -78,7 +85,7 @@
 
             <script>
   // Show chosen resume filename and validate size
-  document.addEventListener('DOMContentLoaded', function() {
+  function initializeResumeUpload() {
     var fileInput = document.getElementById('resume');
     var display = document.getElementById('resume_filename_display');
     var errorDisplay = document.getElementById('resume_error');
@@ -111,13 +118,18 @@
           return;
         }
 
-        // File passed validation - show filename
-        display.innerHTML = 'Selected file: <strong>' + file.name + '</strong>';
+        // File passed validation - clear old content and show new filename
+        display.innerHTML = '✓ New file selected: <strong>' + file.name + '</strong>';
       } else {
+        // No file selected
         display.innerHTML = '';
       }
     });
-  });
+  }
+  
+  // Initialize on page load and on Turbo navigations
+  document.addEventListener('DOMContentLoaded', initializeResumeUpload);
+  document.addEventListener('turbo:load', initializeResumeUpload);
 </script>
 
           <div class="pt-4">
