@@ -10,17 +10,19 @@ class EmailsController < ApplicationController
     @body    = params[:body]
     @resume  = params[:resume]
 
-    # Get existing data if editing
     token = session[:email_data_key]
     existing_data = Rails.cache.read("email_form_#{token}") if token.present?
 
-    # If no new file uploaded during edit, reuse existing resume
     if @resume.blank? && existing_data.present?
       resume_path = existing_data["resume_path"]
       resume_filename = existing_data["resume_filename"]
     elsif @resume.present?
-      # Validate new resume file
-      allowed_types = %w[application/pdf application/msword application/vnd.openxmlformats-officedocument.wordprocessingml.document]
+      allowed_types = %w[
+        application/pdf
+        application/msword
+        application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      ]
+
       unless allowed_types.include?(@resume.content_type)
         flash[:alert] = "Resume must be PDF, DOC, or DOCX"
         return render :new, status: :unprocessable_entity
@@ -31,34 +33,44 @@ class EmailsController < ApplicationController
         return render :new, status: :unprocessable_entity
       end
 
-      # Save resume temporarily
-      resume_path = Rails.root.join("tmp", @resume.original_filename)
-      File.open(resume_path, "wb") { |f| f.write(@resume.read) }
-      resume_filename = @resume.original_filename
+      # 🔐 Generate a SAFE filename (important)
+      original_name = @resume.original_filename
+      extension     = File.extname(original_name)
+      safe_name     = SecureRandom.hex(16) + extension
+
+      resume_path = Rails.root.join("tmp", safe_name)
+
+      File.open(resume_path, "wb") do |file|
+        file.write(@resume.read)
+      end
+
+      # 🔐 Keep original filename ONLY for display
+      resume_filename = original_name
     else
-      # No file provided and not editing
       flash[:alert] = "Resume is required"
       return render :new, status: :unprocessable_entity
     end
 
-    # Validate required fields
     if @emails.blank? || @subject.blank? || @body.blank?
       flash[:alert] = "Emails, subject and body are required"
       return render :new, status: :unprocessable_entity
     end
 
-    # Store the payload in server-side cache and keep a small token in session
     token = SecureRandom.hex(16)
-    Rails.cache.write("email_form_#{token}", {
-      "emails" => @emails,
-      "subject" => @subject,
-      "body" => @body,
-      "resume_path" => resume_path.to_s,
-      "resume_filename" => resume_filename
-    }, expires_in: 30.minutes)
+
+    Rails.cache.write(
+      "email_form_#{token}",
+      {
+        "emails" => @emails,
+        "subject" => @subject,
+        "body" => @body,
+        "resume_path" => resume_path.to_s,
+        "resume_filename" => resume_filename
+      },
+      expires_in: 30.minutes
+    )
 
     session[:email_data_key] = token
-
     redirect_to confirm_emails_path
   end
 
@@ -105,9 +117,10 @@ class EmailsController < ApplicationController
         data["body"]
       )
     end
-    # cleanup
+
     Rails.cache.delete("email_form_#{token}") if token.present?
     session.delete(:email_data_key)
+
     redirect_to email_logs_path, notice: "Emails scheduled successfully!"
   end
 end
