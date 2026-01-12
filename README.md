@@ -50,7 +50,8 @@ Steps:
 1. Enable **2-Step Verification** in your Google account
 2. Go to **Google Account → Security → App Passwords**
 3. Generate an App Password for "Mail"
-4. Use that password in the app configuration
+4. Or visit https://myaccount.google.com/apppasswords to generate direct app password.
+5. Use that password in the app configuration
 
 ---
 
