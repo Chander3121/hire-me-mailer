@@ -32,7 +32,7 @@ gem "solid_queue"
 gem "solid_cable"
 
 gem "tinymce-rails"
-gem 'devise'
+gem "devise"
 gem "sidekiq"
 gem "dotenv-rails", groups: [ :development, :test ]
 

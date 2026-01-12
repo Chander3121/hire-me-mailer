@@ -1,6 +1,6 @@
 namespace :backfill do
   desc "Assign all existing EmailTemplate and EmailLog records to a user by id or email. Usage: rake backfill:assign_user['user@example.com'] or rake backfill:assign_user[123]"
-  task :assign_user, [:identifier] => :environment do |_t, args|
+  task :assign_user, [ :identifier ] => :environment do |_t, args|
     identifier = args[:identifier]
     if identifier.blank?
       puts "Please provide a user id or email: rake backfill:assign_user['user@example.com']"
