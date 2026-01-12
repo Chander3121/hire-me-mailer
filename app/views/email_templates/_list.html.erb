@@ -1,0 +1,21 @@
+<div class="bg-white/10 rounded-lg p-4 shadow-inner" data-email-templates-target="container">
+  <h2 class="text-lg font-semibold mb-3">Templates</h2>
+  <ul id="template_list" data-email-templates-target="list" class="space-y-2 overflow-auto max-h-[70vh]">
+    <% @templates.each do |t| %>
+      <li>
+        <button data-id="<%= t.id %>" type="button" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 template-item"><%= t.name %></button>
+      </li>
+    <% end %>
+  </ul>
+
+  <hr class="my-3" />
+
+  <%= form_with model: EmailTemplate.new, url: email_templates_path, local: true, id: 'new_template_form', class: 'space-y-2' do |f| %>
+    <div>
+      <%= f.text_field :name, placeholder: 'New template name', class: 'w-full px-3 py-2 rounded bg-white/5' %>
+    </div>
+    <div>
+      <%= f.submit 'Create', class: 'px-3 py-2 bg-blue-600 text-white rounded' %>
+    </div>
+  <% end %>
+</div>

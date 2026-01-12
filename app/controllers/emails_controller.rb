@@ -9,7 +9,10 @@ class EmailsController < ApplicationController
 
   MAX_RESUME_SIZE = 10.megabytes
 
-  def new; end
+
+  def new
+    @templates = EmailTemplate.order(:name).pluck(:name, :id)
+  end
 
   def create
     extract_form_params
@@ -56,6 +59,7 @@ class EmailsController < ApplicationController
   end
 
   private
+
 
   # Form / Params
   def extract_form_params

@@ -1,0 +1,21 @@
+<div id="editor_panel" data-email-templates-target="editorPanel" class="hidden bg-white/10 rounded-lg p-4">
+  <h2 class="text-lg font-semibold mb-3">Editor</h2>
+
+  <%= form_with model: EmailTemplate.new, url: email_templates_path, local: true, id: 'template_editor', data: { "email-templates-target": 'form' } do |f| %>
+    <%= hidden_field_tag :_method, 'post', id: 'editor_method', data: { "email-templates-target": 'method' } %>
+
+    <div class="mb-2">
+      <%= f.label :name, class: 'block text-sm font-medium' %>
+      <%= f.text_field :name, id: 'editor_name', data: { "email-templates-target": 'name' }, class: 'w-full px-3 py-2 rounded bg-white/50' %>
+    </div>
+
+    <div class="mb-2">
+      <%= f.label :content, class: 'block text-sm font-medium' %>
+      <%= f.text_area :content, id: 'editor_content', data: { "email-templates-target": 'content' }, rows: 15, class: 'w-full px-3 py-2 rounded bg-white/50' %>
+    </div>
+
+    <div>
+      <%= f.submit 'Save', id: 'editor_save', class: 'px-4 py-2 bg-green-600 text-white rounded' %>
+    </div>
+  <% end %>
+</div>

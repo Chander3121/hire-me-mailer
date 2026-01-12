@@ -1,0 +1,8 @@
+<p>Hi {{name}},</p>
+
+<p>I hope you're doing well. I'm reaching out to express my interest in the open position at your company. I have experience with Ruby on Rails, background in building web applications, and I'm excited about the opportunity to contribute to your team.</p>
+
+<p>Please find my resume attached. Thank you for your time and consideration.</p>
+<br>
+<p>Best regards,</p>
+<p>{{Your Name}}</p>

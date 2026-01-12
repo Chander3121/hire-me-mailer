@@ -20,4 +20,7 @@ Rails.application.routes.draw do
     get :edit, on: :collection
     post :send_emails, on: :collection
   end
+
+  # DB-backed email templates UI and API under /emails/templates
+  resources :email_templates, path: 'emails/templates', only: [:index, :show, :create, :update]
 end

@@ -9,8 +9,8 @@
       </div>
 
       <!-- Form Content -->
-      <div class="p-6 sm:p-8">
-        <%= form_with url: emails_path, local: true, multipart: true, class: "space-y-6" do |f| %>
+      <div class="p-6 sm:p-8" data-controller="emails-form">
+        <%= form_with url: emails_path, local: true, multipart: true, class: "space-y-6", data: { "emails-form-target": 'form' } do |f| %>
 
           <div>
             <label for="emails" class="block text-sm font-semibold text-gray-800 mb-2">HR Emails</label>
@@ -24,44 +24,32 @@
           </div>
 
           <div>
+            <label for="template_select" class="block text-sm font-semibold text-gray-800 mb-2">Prewritten Templates</label>
+            <p class="text-xs text-gray-600 mb-3">Choose a prewritten message to load into the body</p>
+            <select id="template_select" data-emails-form-target="templateSelect" class="w-full px-4 py-3 border border-white/30 rounded-lg bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white/70 transition">
+              <option value="">-- Select a template --</option>
+              <% (@templates || []).each do |name, id| %>
+                <option value="<%= id %>"><%= name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
             <label for="body" class="block text-sm font-semibold text-gray-800 mb-2">Email Body</label>
             <p class="text-xs text-gray-600 mb-3">Write your message here</p>
-            <%= text_area_tag :body, (@body || nil), class: "w-full px-4 py-3 border border-white/30 rounded-lg bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white/70 resize-vertical transition", rows: 12, placeholder: "Enter your email message here...", id: "body_content" %>
+            <%= text_area_tag :body, (@body || nil), data: { "emails-form-target": 'body' }, class: "w-full px-4 py-3 border border-white/30 rounded-lg bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white/70 resize-vertical transition", rows: 12, placeholder: "Enter your email message here...", id: "body_content" %>
           </div>
 
           <% tinymce_key = ENV['TINYMCE_API_KEY'].presence || Rails.application.credentials.dig(:tinymce, :api_key) %>
           <% if tinymce_key.present? %>
             <script src="https://cdn.tiny.cloud/1/<%= tinymce_key %>/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-            <script>
-              function initializeTinyMCE() {
-                if (typeof tinymce !== 'undefined') {
-                  // Remove existing editor if it exists
-                  tinymce.remove('#body_content');
-                  
-                  tinymce.init({
-                    selector: '#body_content',
-                    plugins: 'lists link image code help wordcount',
-                    toolbar: 'formatselect | bold italic underline strikethrough | bullist numlist | link image | code | help',
-                    menubar: false,
-                    height: 400,
-                    statusbar: true,
-                    branding: false,
-                    promotion: false,
-                    skin: 'oxide',
-                    content_css: 'default'
-                  });
-                }
-              }
-              
-              // Initialize on page load and on Turbo navigations
-              document.addEventListener('DOMContentLoaded', initializeTinyMCE);
-              document.addEventListener('turbo:load', initializeTinyMCE);
-            </script>
           <% else %>
             <div class="rounded-md bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
               <p class="text-sm text-yellow-800">TinyMCE API key is not configured. To enable the rich editor set <strong>TINYMCE_API_KEY</strong> (env) or add <code>tinymce: { api_key: 'YOUR_KEY' }</code> to Rails credentials. The plain textarea will be used until configured.</p>
             </div>
           <% end %>
+
+          <!-- Template loader behavior handled by emails-form Stimulus controller -->
 
           <div>
             <label for="resume" class="block text-sm font-semibold text-gray-800 mb-2">Resume (PDF or DOC)</label>
@@ -72,65 +60,17 @@
                   <p class="text-sm text-white"><span class="font-semibold">Click to upload</span> or drag and drop</p>
                   <p class="text-xs text-white/80">PDF, DOC, DOCX up to 10MB</p>
                 </div>
-                <%= file_field_tag :resume, class: "sr-only", id: "resume", accept: ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+                <%= file_field_tag :resume, class: "sr-only", id: "resume", data: { "emails-form-target": 'resume' }, accept: ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
               </label>
             </div>
-            <div id="resume_filename_display" class="mt-2 text-sm text-white/80">
+            <div id="resume_filename_display" data-emails-form-target="resumeDisplay" class="mt-2 text-sm text-white/80">
               <% if @resume_filename.present? %>
                 Current file: <strong><%= @resume_filename %></strong>
               <% end %>
             </div>
-            <div id="resume_error" class="mt-2 text-sm text-red-300 hidden"></div>
+            <div id="resume_error" data-emails-form-target="resumeError" class="mt-2 text-sm text-red-300 hidden"></div>
           </div>
-
-            <script>
-  // Show chosen resume filename and validate size
-  function initializeResumeUpload() {
-    var fileInput = document.getElementById('resume');
-    var display = document.getElementById('resume_filename_display');
-    var errorDisplay = document.getElementById('resume_error');
-    if (!fileInput || !display) return;
-
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-    const ALLOWED_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-    fileInput.addEventListener('change', function(e) {
-      errorDisplay.classList.add('hidden');
-      errorDisplay.innerHTML = '';
-      
-      var file = fileInput.files && fileInput.files[0];
-      if (file) {
-        // Check file type
-        if (!ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(pdf|doc|docx)$/i)) {
-          errorDisplay.innerHTML = '❌ Only PDF, DOC, or DOCX files allowed';
-          errorDisplay.classList.remove('hidden');
-          fileInput.value = '';
-          display.innerHTML = '';
-          return;
-        }
-
-        // Check file size
-        if (file.size > MAX_SIZE) {
-          errorDisplay.innerHTML = '❌ File size must be less than 10MB (your file: ' + (file.size / (1024 * 1024)).toFixed(2) + 'MB)';
-          errorDisplay.classList.remove('hidden');
-          fileInput.value = '';
-          display.innerHTML = '';
-          return;
-        }
-
-        // File passed validation - clear old content and show new filename
-        display.innerHTML = '✓ New file selected: <strong>' + file.name + '</strong>';
-      } else {
-        // No file selected
-        display.innerHTML = '';
-      }
-    });
-  }
-  
-  // Initialize on page load and on Turbo navigations
-  document.addEventListener('DOMContentLoaded', initializeResumeUpload);
-  document.addEventListener('turbo:load', initializeResumeUpload);
-</script>
+          <!-- Resume upload behavior handled by emails-form Stimulus controller -->
 
           <div class="pt-4">
             <%= submit_tag "Send Emails", class: "w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-lg hover:shadow-xl" %>
