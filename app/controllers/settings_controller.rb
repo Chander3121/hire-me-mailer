@@ -1,6 +1,6 @@
 class SettingsController < ApplicationController
   before_action :ensure_authenticated_user
-  skip_before_action :ensure_user_settings_present, only: [:new, :create]
+  skip_before_action :ensure_user_settings_present, only: [ :new, :create ]
 
   def new
     @setting = current_user.build_setting
@@ -10,9 +10,9 @@ class SettingsController < ApplicationController
     @setting = current_user.build_setting(setting_params)
     if @setting.save
       current_user.update!(setting_present: true)
-      redirect_to root_path, notice: 'Settings saved successfully'
+      redirect_to root_path, notice: "Settings saved successfully"
     else
-      flash.now[:alert] = 'Please fix errors below'
+      flash.now[:alert] = "Please fix errors below"
       render :new, status: :unprocessable_entity
     end
   end
@@ -25,9 +25,9 @@ class SettingsController < ApplicationController
     @setting = current_user.setting
     if @setting.update(setting_params)
       current_user.update!(setting_present: true)
-      redirect_to root_path, notice: 'Settings updated'
+      redirect_to root_path, notice: "Settings updated"
     else
-      flash.now[:alert] = 'Please fix errors below'
+      flash.now[:alert] = "Please fix errors below"
       render :edit, status: :unprocessable_entity
     end
   end

@@ -20,6 +20,10 @@
   <% end %>
 
   <p class="mt-4 text-center text-sm">
-    Forgot password? <%= link_to "Reset", new_password_path(resource_name), class: "text-blue-500 underline" %>
+    Forgot password? <%= link_to "Reset", new_password_path(resource_name), class: "text-yellow-500 underline" %>
+  </p>
+
+  <p class="mt-4 text-center text-sm">
+    Don't have an account! <%= link_to "Create new account", new_user_registration_path, class: "text-green-500 underline" %>
   </p>
 </div>

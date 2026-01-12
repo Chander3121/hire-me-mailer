@@ -23,6 +23,6 @@ Rails.application.routes.draw do
   end
 
   # DB-backed email templates UI and API under /emails/templates
-  resources :email_templates, path: 'emails/templates', only: [:index, :show, :create, :update]
-  resource :setting, only: [:new, :create, :edit, :update]
+  resources :email_templates, path: "emails/templates", only: [ :index, :show, :create, :update ]
+  resource :setting, only: [ :new, :create, :edit, :update ]
 end

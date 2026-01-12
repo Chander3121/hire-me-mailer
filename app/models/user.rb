@@ -4,4 +4,8 @@ class User < ApplicationRecord
   has_many :email_templates, dependent: :destroy
   has_many :email_logs, dependent: :destroy
   has_one :setting, dependent: :destroy
+
+  def username
+    email.split("@").first
+  end
 end
