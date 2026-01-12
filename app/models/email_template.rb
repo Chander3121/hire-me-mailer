@@ -1,3 +1,5 @@
 class EmailTemplate < ApplicationRecord
-  validates :name, presence: true, uniqueness: true
+  belongs_to :user, optional: true
+
+  validates :name, presence: true, uniqueness: { scope: :user_id }
 end
