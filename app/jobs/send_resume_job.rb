@@ -14,7 +14,7 @@ class SendResumeJob < ApplicationJob
       )
       .deliver_now
 
-    log.update!(status: "sent")
+    log.update!(status: "sent", sent_at: Time.now)
   rescue => e
     log.update!(status: "failed")
     Rails.logger.error e.message
