@@ -1,6 +1,7 @@
 require "securerandom"
 
 class EmailsController < ApplicationController
+  before_action :authenticate_user!
   ALLOWED_CONTENT_TYPES = {
     "application/pdf" => ".pdf",
     "application/msword" => ".doc",
@@ -9,7 +10,14 @@ class EmailsController < ApplicationController
 
   MAX_RESUME_SIZE = 10.megabytes
 
-  def new; end
+
+  def new
+    if user_signed_in?
+      @templates = current_user.email_templates.order(:name).pluck(:name, :id)
+    else
+      @templates = EmailTemplate.order(:name).pluck(:name, :id)
+    end
+  end
 
   def create
     extract_form_params
@@ -56,6 +64,7 @@ class EmailsController < ApplicationController
   end
 
   private
+
 
   # Form / Params
   def extract_form_params
@@ -145,7 +154,8 @@ class EmailsController < ApplicationController
       log = EmailLog.create!(
         email: email,
         subject: data["subject"],
-        status: "pending"
+        status: "pending",
+        user: (current_user if defined?(current_user))
       )
 
       SendResumeJob.set(wait: index.minutes).perform_later(

@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
   mount Sidekiq::Web => "/sidekiq"
+  devise_for :users
   root "emails#new"
   resources :email_logs, only: :index
   resources :emails, only: [ :new, :create ] do
@@ -20,4 +21,8 @@ Rails.application.routes.draw do
     get :edit, on: :collection
     post :send_emails, on: :collection
   end
+
+  # DB-backed email templates UI and API under /emails/templates
+  resources :email_templates, path: 'emails/templates', only: [:index, :show, :create, :update]
+  resource :setting, only: [:new, :create, :edit, :update]
 end
