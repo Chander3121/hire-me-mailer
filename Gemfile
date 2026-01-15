@@ -18,7 +18,7 @@ gem "stimulus-rails"
 gem "jbuilder"
 
 # Pin minitest to 5.x for compatibility with Rails test helpers
-gem "minitest", "~> 5.14"
+gem "minitest", "~> 6.0"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
